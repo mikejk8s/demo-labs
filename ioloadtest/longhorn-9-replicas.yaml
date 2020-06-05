@@ -1,9 +1,8 @@
-
-allowVolumeExpansion: true
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: longhorn-three-replica
+  name: longhorn-nine-replica
+allowVolumeExpansion: true
 parameters:
   baseImage: ""
   fromBackup: ""
@@ -14,37 +13,38 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 
 ---
+
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: longhorn-three-replica
+  name: longhorn-nine-replica
   namespace: loadtest
 spec:
-  storageClassName: longhorn
+  storageClassName: longhorn-nine-replica
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 200Gi # EDIT ME
+      storage: 500Gi #EDIT ME
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: longhorn-three-replica
+  name: longhorn-nine-replica
   namespace: loadtest
 spec:
   selector:
     matchLabels:
-      loadtest: longhorn-three-replica
+      loadtest: longhorn-nine-replica
   template:
     metadata:
       labels:
-        loadtest: longhorn-three-replica
+        loadtest: longhorn-nine-replica
     spec:
         volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: longhorn-three-replica
+            claimName: longhorn-nine-replica
         - name: benchmarks
           emptyDir: {}
         - name: plots
@@ -139,27 +139,27 @@ spec:
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: longhorn-three-replica
+  name: longhorn-nine-replica
   namespace: loadtest
 spec:
   rules:
-    - host: longhorn-three-replica.loadtest.172.16.133.232.xip.io
+    - host: longhorn-nine-replica.loadtest.172.16.133.232.xip.io
       http:
         paths:
           - path: /
             backend:
-              serviceName: longhorn-three-replica
+              serviceName: longhorn-nine-replica
               servicePort: 80
 ---
 # kubectl port-forward service/longhorn-three-replica 80:8000
 apiVersion: v1
 kind: Service
 metadata:
-  name: longhorn-three-replica
+  name: longhorn-nine-replica
   namespace: loadtest
 spec:
   ports:
     - port: 80
       targetPort: 8000
   selector:
-    loadtest: longhorn-three-replica
+    loadtest: longhorn-nine-replica

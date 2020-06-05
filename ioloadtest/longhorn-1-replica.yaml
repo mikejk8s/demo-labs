@@ -9,7 +9,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
+      storage: 1000Gi ##EDIT ME
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -135,6 +135,7 @@ spec:
               serviceName: longhorn-single-replica
               servicePort: 80
 ---
+#kubectl port-forward service/longhorn-three-replica 80:8000   
 apiVersion: v1
 kind: Service
 metadata:

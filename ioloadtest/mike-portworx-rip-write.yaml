@@ -1,0 +1,79 @@
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mikej-longhorn2
+  namespace: loadtest
+spec:
+  storageClassName: longhorn
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fio-tester-write
+  namespace: loadtest
+  labels:
+    purpose: fio-testing-write
+spec:
+  selector:
+    matchLabels:
+      app: fio-testing-write
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: fio-testing-write
+    spec:
+      containers:
+      - name: fio-container
+        image: wallnerryan/fiotools-aio
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: fio-data
+          mountPath: /myvol
+        env:
+          - name: REMOTEFILES
+            value: "https://gist.githubusercontent.com/wallnerryan/cb8f9946a6fb9bdc0aabd403d9550e08/raw/31308d8139718901c1b53c9dea33526cf591881d/seqwrite.fio"
+          - name: JOBFILES
+            value: seqwrite.fio
+          - name: PLOTNAME
+            value: seqwrite
+        # securityContext:
+        #   privileged: true
+      volumes:
+      - name: fio-data
+        persistentVolumeClaim:
+          claimName: mikej-longhorn2
+    #   hostPID: true
+    #   hostNetwork: true
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: fiotools-write
+  namespace: loadtest
+  labels:
+    name: fiotools-write
+spec:
+  type: NodePort
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  selector:
+    app: fio-testing-write
